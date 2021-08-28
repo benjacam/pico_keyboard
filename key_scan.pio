@@ -1,0 +1,72 @@
+; Interrupt externally set when write SM empties the FIFO after triggering read SM
+.define public KEY_SCAN_IRQ 0
+
+; 32 bit PIO bus write with auto-pull
+; Processor fills the fifo will all the words it wants to "out"
+; PIO interrupts processor on IRQ0 when FIFO is empty.
+.program key_scan_write
+public start:
+    out pins 32
+    irq wait 4
+    jmp !osre start
+    irq wait KEY_SCAN_IRQ
+
+; 32 bit PIO bus read with auto-push,
+; Read triggered by IRQ4 set by write SM
+.program key_scan_read
+public start:
+    wait 1 irq 4
+    in pins 32
+
+% c-sdk {
+
+/* The SM used for writing column scan data  */
+#define SM_WRITE 0
+/* The SM used for reading rows */
+#define SM_READ 1
+
+static inline uint pio_key_scan_init(PIO pio, uint32_t col_mask, uint32_t row_mask)
+{
+    pio_sm_config c;
+    uint offset_write, offset_read;
+
+    // The scan of all columns should complete in 1ms.
+    // Therefore the PIO clock should be 125e6/(1kHz*instructions*NCOLS/2)
+    // NCOLS/2 because we scan two columns at a time.
+    // The sys clk is 125MHz.
+    const float clkdiv = 125000000 / (1000 * (key_scan_write_program.length-1) * (COLS / 2));
+
+    pio_sm_set_pins_with_mask(pio, SM_WRITE, 0, col_mask);
+    pio_sm_set_pindirs_with_mask(pio, SM_WRITE, col_mask, col_mask);
+
+    for (uint i = 0; i < 32; i++)
+    {
+        if (col_mask & (1 << i))
+            pio_gpio_init(pio, i);
+        if (row_mask & (1 << i))
+            gpio_pull_down(i);
+    }
+
+    offset_write = pio_add_program(pio, &key_scan_write_program);
+    c = key_scan_write_program_get_default_config(offset_write);
+    sm_config_set_out_pins(&c, 0, 32);
+    sm_config_set_in_pins(&c, 0);
+    sm_config_set_clkdiv(&c, clkdiv);
+    sm_config_set_out_shift(&c, false, true, 32);
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+    pio_sm_init(pio, SM_WRITE, offset_write + key_scan_write_offset_start, &c);
+    pio_sm_set_enabled(pio, SM_WRITE, true);
+
+    offset_read = pio_add_program(pio, &key_scan_read_program);
+    c = key_scan_read_program_get_default_config(offset_read);
+    sm_config_set_out_pins(&c, 0, 0);
+    sm_config_set_in_pins(&c, 0);
+    sm_config_set_clkdiv(&c, 1);
+    sm_config_set_in_shift(&c, false, true, 32);
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_RX);
+    pio_sm_init(pio, SM_READ, offset_read + key_scan_read_offset_start, &c);
+    pio_sm_set_enabled(pio, SM_READ, true);
+}
+
+%}
+

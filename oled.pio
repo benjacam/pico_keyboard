@@ -1,0 +1,101 @@
+; 16-bits, auto-pull, left shift
+; Schedules other SMs and controls the SH1107 A and CSB pin
+; A  =PIO OUT bit 0
+; CSB=PIO SET bit 0
+.program sh1107_control
+public start:
+.wrap_target
+        jmp !osre data_ready    ; Data queued, don't set CSB
+        set pins 1              ; CSB=1
+    data_ready:
+        out pins 1              ; Set A (0 for command, 1 for data)
+        out y 1                 ; SM to trigger
+        out x 14                ; Store number of bytes
+        set pins 0              ; CSB=0
+
+        jmp !y sm2_triggered
+
+sm1_triggered:
+        irq set 4
+        wait 1 irq 6
+        jmp x-- sm1_triggered
+        jmp start
+
+sm2_triggered:
+        irq set 5
+        wait 1 irq 7
+        jmp x-- sm2_triggered
+.wrap
+
+; 8-bits, not-auto-pull, left shift
+; Reads bytes from FIFO and serialises
+; MOSI=PIO OUT bit 0
+; CLK= PIO SET bit 0
+.program sh1107_data
+public start:
+.wrap_target
+        wait 1 irq 4 rel        ; IRQ4 on SM0, IRQ5 on SM1
+        set x 7
+        pull block
+
+    bit_loop:
+        out pins 1
+        set pins 0       [31]   ; CLK=0
+        set pins 1       [29]   ; CLK=1
+        jmp x-- bit_loop
+        irq set 6 rel           ; IRQ6 on SM0, IRQ7 on SM1
+.wrap
+
+% c-sdk {
+
+/* The SM used for sending data the OLED instance 1 */
+#define CMD_SM 0
+/* The SM used for sending data the OLED instance 2 */
+#define DAT_SM 1
+/* The SM used for control */
+#define CONTROL_SM 2
+
+#define A_PIN_CMD 0
+#define A_PIN_DAT 1
+
+/* The command SM header, must always set COMMAND_BYTES */
+#define SM_CONTROL_HEADER(A_VALUE, SM, COMMAND_BYTES) (((A_VALUE) << 15) + ((SM) << 14) + ((COMMAND_BYTES) - 1))
+
+static inline void sh1107_pio_init(PIO pio, uint a_pin, uint csb_pin, uint clk_pin, uint mosi_pin)
+{
+    pio_sm_config c;
+    uint offset;
+
+    pio_gpio_init(pio, mosi_pin);
+    pio_gpio_init(pio, a_pin);
+    pio_gpio_init(pio, csb_pin);
+    pio_gpio_init(pio, clk_pin);
+    pio_sm_set_consecutive_pindirs(pio, CONTROL_SM, a_pin, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, CONTROL_SM, csb_pin, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, CMD_SM, mosi_pin, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, CMD_SM, clk_pin, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, DAT_SM, mosi_pin, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, DAT_SM, clk_pin, 1, true);
+
+    offset = pio_add_program(pio, &sh1107_control_program);
+    c = sh1107_control_program_get_default_config(offset);
+    sm_config_set_set_pins(&c, csb_pin, 1);
+    sm_config_set_out_pins(&c, a_pin, 1);
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+    sm_config_set_out_shift(&c, false, true, 16);
+    pio_sm_init(pio, CONTROL_SM, offset, &c);
+    pio_sm_set_enabled(pio, CONTROL_SM, true);
+
+    offset = pio_add_program(pio, &sh1107_data_program);
+    c = sh1107_data_program_get_default_config(offset);
+    sm_config_set_set_pins(&c, clk_pin, 1);
+    sm_config_set_out_pins(&c, mosi_pin, 1);
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+    sm_config_set_out_shift(&c, false, false, 8);
+    pio_sm_init(pio, CMD_SM, offset, &c);
+    pio_sm_init(pio, DAT_SM, offset, &c);
+    pio_sm_set_enabled(pio, CMD_SM, true);
+    pio_sm_set_enabled(pio, DAT_SM, true);
+}
+
+%}
