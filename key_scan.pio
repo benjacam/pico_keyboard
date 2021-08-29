@@ -34,7 +34,7 @@ static inline uint pio_key_scan_init(PIO pio, uint32_t col_mask, uint32_t row_ma
     // Therefore the PIO clock should be 125e6/(1kHz*instructions*NCOLS/2)
     // NCOLS/2 because we scan two columns at a time.
     // The sys clk is 125MHz.
-    const float clkdiv = 125000000 / (1000 * (key_scan_write_program.length-1) * (COLS / 2));
+    const float clkdiv = 125000000 / (1000 * key_scan_write_program.length * (COLS / 2));
 
     pio_sm_set_pins_with_mask(pio, SM_WRITE, 0, col_mask);
     pio_sm_set_pindirs_with_mask(pio, SM_WRITE, col_mask, col_mask);
