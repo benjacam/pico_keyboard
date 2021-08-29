@@ -43,7 +43,7 @@ typedef struct oled_state
 
 } oled_state_t;
 
-static oled_state_t state;
+static oled_state_t oled_state;
 
 static void setup_dma(const uint16_t *control_sequence, uint control_sequence_count, const uint8_t *commands, uint commands_count);
 static void oled_Redraw(void);
@@ -123,47 +123,47 @@ const uint8_t commands_to_turn_off_display[] =
 
 void Oled_Init(PIO pio)
 {
-    state.pio = pio;
+    oled_state.pio = pio;
     sh1107_pio_init(pio, 12, 13, 14, 15);
 
     // sm_ctrl_chan triggers the cmd and data PIO SMs
-    int sm_ctrl_chan = dma_claim_unused_channel(true);
+    oled_state.sm_ctrl_chan = dma_claim_unused_channel(true);
     // cmd_chan writes command data to the command PIO SM
-    int cmd_chan = dma_claim_unused_channel(true);
+    oled_state.cmd_chan = dma_claim_unused_channel(true);
     // data_seq_chan triggers the data_chan to write a sequence of source data to the data PIO SM
-    int data_seq_chan = dma_claim_unused_channel(true);
+    oled_state.data_seq_chan = dma_claim_unused_channel(true);
     // Writes data to the data PIO SM - triggered by the sequencer
-    int data_chan = dma_claim_unused_channel(true);
+    oled_state.data_chan = dma_claim_unused_channel(true);
 }
 
 void Oled_Start(void)
 {
-    state.on_target = true;
+    oled_state.on_target = true;
 }
 
 void Oled_Stop(void)
 {
-    state.on_target = false;
+    oled_state.on_target = false;
 }
 
 bool Oled_Refresh(void)
 {
-    if (!dma_channel_is_busy(state.sm_ctrl_chan) &&
-        !dma_channel_is_busy(state.cmd_chan) &&
-        !dma_channel_is_busy(state.data_seq_chan) &&
-        !dma_channel_is_busy(state.data_chan))
+    if (!dma_channel_is_busy(oled_state.sm_ctrl_chan) &&
+        !dma_channel_is_busy(oled_state.cmd_chan) &&
+        !dma_channel_is_busy(oled_state.data_seq_chan) &&
+        !dma_channel_is_busy(oled_state.data_chan))
     {
-        if (state.on_target)
+        if (oled_state.on_target)
         {
             oled_Redraw();
-            state.on = true;
+            oled_state.on = true;
         }
         else
         {
-            if (state.on)
+            if (oled_state.on)
             {
                 oled_Off();
-                state.on = false;
+                oled_state.on = false;
             }
         }
     }
@@ -172,47 +172,47 @@ bool Oled_Refresh(void)
 static void setup_dma(const uint16_t *control_sequence, uint control_sequence_count, const uint8_t *commands, uint commands_count)
 {
     dma_channel_config c;
-    uint pio_tx_dreq = pio_get_index(state.pio) ? DREQ_PIO1_TX0 : DREQ_PIO0_TX0;
+    uint pio_tx_dreq = pio_get_index(oled_state.pio) ? DREQ_PIO1_TX0 : DREQ_PIO0_TX0;
 
     // The sm control channel transfers a series of commands from a linear buffer
     // into the CONTROL_SM PIO TX FIFO then halts.
-    c = dma_channel_get_default_config(state.sm_ctrl_chan);
+    c = dma_channel_get_default_config(oled_state.sm_ctrl_chan);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_16);
     channel_config_set_dreq(&c, pio_tx_dreq + CONTROL_SM);
-    dma_channel_configure(state.sm_ctrl_chan, &c, &state.pio->txf[CONTROL_SM],
+    dma_channel_configure(oled_state.sm_ctrl_chan, &c, &oled_state.pio->txf[CONTROL_SM],
                           control_sequence, control_sequence_count, false);
 
     // The command channel transfers a series of commands from a linear buffer
     // into the CMD_SM PIO TX FIFO then halts.
-    c = dma_channel_get_default_config(state.cmd_chan);
+    c = dma_channel_get_default_config(oled_state.cmd_chan);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
     channel_config_set_dreq(&c, pio_tx_dreq + CMD_SM);
-    dma_channel_configure(state.cmd_chan, &c, &state.pio->txf[CMD_SM],
+    dma_channel_configure(oled_state.cmd_chan, &c, &oled_state.pio->txf[CMD_SM],
                           commands, commands_count, false);
 
-    // The data sequencer channel transfers 1 word into the data channel2's control
+    // The data sequencer channel transfers 1 word into the data channel's control
     // read address register, then halts
-    c = dma_channel_get_default_config(state.data_seq_chan);
-    dma_channel_configure(state.data_seq_chan, &c, &dma_hw->ch[state.data_chan].al3_read_addr_trig, state.character_pointer_buffer, 1, false);
+    c = dma_channel_get_default_config(oled_state.data_seq_chan);
+    dma_channel_configure(oled_state.data_seq_chan, &c, &dma_hw->ch[oled_state.data_chan].al3_read_addr_trig, oled_state.character_pointer_buffer, 1, false);
 
     // The data channel is set up to write to the DAT_SM PIO FIFO (paced by the
     // PIO's TX FIFO request signal) and then chain to the control channel
     // once it completes. The control channel programs a new read address and
     // retriggers the data channel. It writes 8 bytes (one character) in each transfer
-    c = dma_channel_get_default_config(state.data_chan);
+    c = dma_channel_get_default_config(oled_state.data_chan);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
     channel_config_set_dreq(&c, pio_tx_dreq + DAT_SM);
     channel_config_set_ring(&c, false, 3); // RX buffer wrap at 64-bit/8-byte boundary
     // Trigger ctrl_chan when data_chan completes
-    channel_config_set_chain_to(&c, state.data_seq_chan);
-    dma_channel_configure(state.data_chan, &c, &state.pio->txf[DAT_SM], NULL, 8, false);
+    channel_config_set_chain_to(&c, oled_state.data_seq_chan);
+    dma_channel_configure(oled_state.data_chan, &c, &oled_state.pio->txf[DAT_SM], NULL, 8, false);
 }
 
 static void set_character(uint r, uint c, const uint64_t *character)
 {
-    const uint64_t **current = &state.character_pointer_buffer[r][c];
+    const uint64_t **current = &oled_state.character_pointer_buffer[r][c];
     if (*current != character)
-        state.changed = true;
+        oled_state.changed = true;
     *current = character;
 }
 
@@ -233,7 +233,7 @@ static void oled_Redraw(void)
     const uint64_t *character_set = Hid_IsShifted() ? character_set_shift : character_set;
     layer_t layer = KeyScan_GetCurrentLayer();
 
-    state.changed = false;
+    oled_state.changed = false;
 
     FOREACH_ROW(r)
     {
@@ -242,12 +242,12 @@ static void oled_Redraw(void)
             const key_config_t *kconf = Keys_GetKeyConfig(layer, r, c);
             key_event_t event = kconf->on_press;
             const uint64_t *character = character_set + event;
-            uint8_t rs = state.rotate_state[r][c];
+            uint8_t rs = oled_state.rotate_state[r][c];
 
             if (rs || Key_IsPressed(Keys_GetKey(r, c)))
             {
                 character = (const uint64_t*)((const uint8_t*)character + rs);
-                state.rotate_state[r][c] = ((rs + 1) % 8);
+                oled_state.rotate_state[r][c] = ((rs + 1) % 8);
             }
             if (c == (COLS / 2))
             {
@@ -268,12 +268,12 @@ static void oled_Redraw(void)
     set_character(15, 13, Hid_IsNumLocked()    ? &character_set[EVENT_SPACE] : &character_set[EVENT_NONE]);
     set_character(15, 15, Hid_IsScrollLocked() ? &character_set[EVENT_SPACE] : &character_set[EVENT_NONE]);
 
-    if (state.changed)
+    if (oled_state.changed)
     {
-        uint32_t mask = (1 << state.sm_ctrl_chan) |
-                        (1 << state.cmd_chan) |
-                        (1 << state.data_seq_chan) |
-                        (1 << state.data_chan);
+        uint32_t mask = (1 << oled_state.sm_ctrl_chan) |
+                        (1 << oled_state.cmd_chan) |
+                        (1 << oled_state.data_seq_chan) |
+                        (1 << oled_state.data_chan);
         setup_dma(sm_control_sequence_to_update_display, count_of(sm_control_sequence_to_update_display),
                   commands_to_update_display, count_of(commands_to_update_display));
         dma_start_channel_mask(mask);
@@ -282,8 +282,8 @@ static void oled_Redraw(void)
 
 static void oled_Off(void)
 {
-    uint32_t mask = (1 << state.sm_ctrl_chan) |
-                    (1 << state.cmd_chan);
+    uint32_t mask = (1 << oled_state.sm_ctrl_chan) |
+                    (1 << oled_state.cmd_chan);
     setup_dma(sm_control_sequence_to_turn_off_display, count_of(sm_control_sequence_to_turn_off_display),
               commands_to_turn_off_display, count_of(commands_to_turn_off_display));
     dma_start_channel_mask(mask);  
