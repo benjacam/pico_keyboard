@@ -48,6 +48,7 @@ static oled_state_t oled_state;
 static void setup_dma(const uint16_t *control_sequence, uint control_sequence_count, const uint8_t *commands, uint commands_count);
 static void oled_Redraw(void);
 static void oled_Off(void);
+static void set_character(uint r, uint c, const uint64_t *character);
 
 // Data to send to the PIO sm_ctrl_chan to update the full display
 const uint16_t sm_control_sequence_to_update_display[] =
@@ -134,6 +135,14 @@ void Oled_Init(PIO pio)
     oled_state.data_seq_chan = dma_claim_unused_channel(true);
     // Writes data to the data PIO SM - triggered by the sequencer
     oled_state.data_chan = dma_claim_unused_channel(true);
+
+    for (uint r = 0; r < SH1107_CHAR_ROWS; r++)
+    {
+        for (uint c = 0; c < SH1107_CHAR_COLS; c++)
+        {
+            set_character(r, c, character_set + EVENT_NONE);
+        }
+    }
 }
 
 void Oled_Start(void)
@@ -203,7 +212,7 @@ static void setup_dma(const uint16_t *control_sequence, uint control_sequence_co
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
     channel_config_set_dreq(&c, pio_tx_dreq + DAT_SM);
     channel_config_set_ring(&c, false, 3); // RX buffer wrap at 64-bit/8-byte boundary
-    // Trigger ctrl_chan when data_chan completes
+    // Trigger data_seq_chan when data_chan completes
     channel_config_set_chain_to(&c, oled_state.data_seq_chan);
     dma_channel_configure(oled_state.data_chan, &c, &oled_state.pio->txf[DAT_SM], NULL, 8, false);
 }
@@ -212,8 +221,10 @@ static void set_character(uint r, uint c, const uint64_t *character)
 {
     const uint64_t **current = &oled_state.character_pointer_buffer[r][c];
     if (*current != character)
+    {
         oled_state.changed = true;
-    *current = character;
+        *current = character;
+    }
 }
 
 static const key_event_t layer_names[NLAYERS][5] =
@@ -230,29 +241,29 @@ static void oled_Redraw(void)
 {
     uint row_offset = 1;
     uint col_offset = 1;
-    const uint64_t *character_set = Hid_IsShifted() ? character_set_shift : character_set;
+    const uint64_t *charset = Hid_IsShifted() ? character_set_shift : character_set;
     layer_t layer = KeyScan_GetCurrentLayer();
 
     oled_state.changed = false;
 
-    FOREACH_ROW(r)
+    FOREACH_COL(c)
     {
-        FOREACH_COL(c)
+        if (c == (COLS / 2))
+        {
+            // Offset right hand keys to right of display
+            col_offset = 4;
+        }
+        FOREACH_ROW(r)
         {
             const key_config_t *kconf = Keys_GetKeyConfig(layer, r, c);
             key_event_t event = kconf->on_press;
-            const uint64_t *character = character_set + event;
+            const uint64_t *character = charset + event;
             uint8_t rs = oled_state.rotate_state[r][c];
 
             if (rs || Key_IsPressed(Keys_GetKey(r, c)))
             {
                 character = (const uint64_t*)((const uint8_t*)character + rs);
                 oled_state.rotate_state[r][c] = ((rs + 1) % 8);
-            }
-            if (c == (COLS / 2))
-            {
-                // Offset right hand keys to right of display
-                col_offset = 8;
             }
             set_character(row_offset+r, col_offset+c, character);
         }
@@ -272,8 +283,7 @@ static void oled_Redraw(void)
     {
         uint32_t mask = (1 << oled_state.sm_ctrl_chan) |
                         (1 << oled_state.cmd_chan) |
-                        (1 << oled_state.data_seq_chan) |
-                        (1 << oled_state.data_chan);
+                        (1 << oled_state.data_seq_chan);
         setup_dma(sm_control_sequence_to_update_display, count_of(sm_control_sequence_to_update_display),
                   commands_to_update_display, count_of(commands_to_update_display));
         dma_start_channel_mask(mask);
