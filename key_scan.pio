@@ -38,13 +38,17 @@ static inline uint pio_key_scan_init(PIO pio, uint32_t col_mask, uint32_t row_ma
 
     pio_sm_set_pins_with_mask(pio, SM_WRITE, 0, col_mask);
     pio_sm_set_pindirs_with_mask(pio, SM_WRITE, col_mask, col_mask);
+    pio_sm_set_pindirs_with_mask(pio, SM_READ, 0, row_mask);
 
     for (uint i = 0; i < 32; i++)
     {
         if (col_mask & (1 << i))
             pio_gpio_init(pio, i);
         if (row_mask & (1 << i))
+        {
+            gpio_set_input_enabled(i, true);
             gpio_pull_down(i);
+        }
     }
 
     offset_write = pio_add_program(pio, &key_scan_write_program);
