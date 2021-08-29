@@ -13,18 +13,18 @@ public start:
         out x 14                ; Store number of bytes
         set pins 0              ; CSB=0
 
-        jmp !y sm2_triggered
+        jmp !y sm0_triggered
 
 sm1_triggered:
-        irq set 4
-        wait 1 irq 6
+        irq set 5
+        wait 1 irq 7
         jmp x-- sm1_triggered
         jmp start
 
-sm2_triggered:
-        irq set 5
-        wait 1 irq 7
-        jmp x-- sm2_triggered
+sm0_triggered:
+        irq set 4
+        wait 1 irq 6
+        jmp x-- sm0_triggered
 .wrap
 
 ; 8-bits, not-auto-pull, left shift
