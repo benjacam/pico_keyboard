@@ -151,6 +151,10 @@ void Hid_HandleKeyEvents(key_event_t* set_events, uint n_set)
     {
         hid_state.shifted = true;
     }
+    else
+    {
+        hid_state.shifted = false;
+    }
 }
 
 static void hid_queue_kick(void)
