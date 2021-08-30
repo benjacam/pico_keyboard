@@ -228,19 +228,6 @@ uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t
     (void) buffer;
     (void) reqlen;
 
-    if (itf == 0)
-    {
-        if (report_id == REPORT_ID_KEYBOARD)
-        {
-            if (report_type == HID_REPORT_TYPE_OUTPUT)
-            {
-                hid_state.num_lock =    !!(buffer[0] & 1);
-                hid_state.caps_lock =   !!(buffer[0] & 2);
-                hid_state.scroll_lock = !!(buffer[0] & 4);
-            }
-        }
-    }
-
     return 0;
 }
 
@@ -254,6 +241,19 @@ void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t rep
     (void) report_type;
     (void) buffer;
     (void) bufsize;
+
+    if (itf == 0)
+    {
+        if (report_id == REPORT_ID_KEYBOARD)
+        {
+            if (report_type == HID_REPORT_TYPE_OUTPUT)
+            {
+                hid_state.num_lock =    !!(buffer[1] & 1);
+                hid_state.caps_lock =   !!(buffer[1] & 2);
+                hid_state.scroll_lock = !!(buffer[1] & 4);
+            }
+        }
+    }
 }
 
 bool Hid_IsCapsLocked(void)
@@ -273,5 +273,5 @@ bool Hid_IsNumLocked(void)
 
 bool Hid_IsShifted(void)
 {
-    return Hid_IsCapsLocked() || hid_state.shifted;
+    return hid_state.shifted;
 }
