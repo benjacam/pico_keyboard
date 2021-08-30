@@ -237,6 +237,27 @@ static const key_event_t layer_names[NLAYERS][5] =
     [LAYER_SYM]   = {EVENT_S, EVENT_Y, EVENT_M, EVENT_NONE, EVENT_NONE},
 };
 
+enum locks
+{
+    LOCK_CAPS,
+    LOCK_NUM,
+    LOCK_SCROLL,
+    LOCKS_END
+};
+
+typedef struct _lock_config
+{
+    bool (*get_lock)();
+    key_event_t lock_name[4];
+} lock_config_t;
+
+const lock_config_t lock_config[] =
+{
+    [LOCK_CAPS] =   {.get_lock = Hid_IsCapsLocked,   .lock_name = {EVENT_C, EVENT_A, EVENT_P, EVENT_NONE}},
+    [LOCK_NUM] =    {.get_lock = Hid_IsNumLocked,    .lock_name = {EVENT_N, EVENT_U, EVENT_M, EVENT_NONE}},
+    [LOCK_SCROLL] = {.get_lock = Hid_IsScrollLocked, .lock_name = {EVENT_S, EVENT_C, EVENT_R, EVENT_NONE}},
+};
+
 static void oled_Redraw(void)
 {
     uint row_offset = 1;
@@ -275,9 +296,15 @@ static void oled_Redraw(void)
         set_character(15, c, &character_set_shift[e]);
     }
 
-    set_character(15, 11, Hid_IsCapsLocked()   ? &character_set[EVENT_SPACE] : &character_set[EVENT_NONE]);
-    set_character(15, 13, Hid_IsNumLocked()    ? &character_set[EVENT_SPACE] : &character_set[EVENT_NONE]);
-    set_character(15, 15, Hid_IsScrollLocked() ? &character_set[EVENT_SPACE] : &character_set[EVENT_NONE]);
+    for (uint r = 0, lock = 0; lock < count_of(lock_config); lock++)
+    {
+        bool is_locked = lock_config[lock].get_lock();
+        for (uint e = 0; e < count_of(lock_config[0].lock_name); e++)
+        {
+            key_event_t event = is_locked ? lock_config[lock].lock_name[e] : EVENT_NONE;
+            set_character(14, r++, &character_set[event]);
+        }
+    }
 
     if (oled_state.changed)
     {
