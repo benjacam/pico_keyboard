@@ -56,10 +56,10 @@ void MouseMovement_HandleKeyEvent(key_event_t* set_events, uint n_set)
             {
                 switch (d)
                 {
-                    case UP:    state.mouse_up_down_integral++;    break;
-                    case DOWN:  state.mouse_up_down_integral--;    break;
-                    case LEFT:  state.mouse_left_right_integral++; break;
-                    case RIGHT: state.mouse_left_right_integral--; break;
+                    case UP:    state.mouse_up_down_integral--;    break;
+                    case DOWN:  state.mouse_up_down_integral++;    break;
+                    case LEFT:  state.mouse_left_right_integral--; break;
+                    case RIGHT: state.mouse_left_right_integral++; break;
                     default: break;
                 }
                 state.mouse_ages[d]++;
