@@ -1,5 +1,12 @@
 #include "key.h"
 
+static void handleReleased(keyk_t *key, uint32_t age)
+{
+    key->state = KEY_DEBOUNCE;
+    key->last_press_duration = age;
+    key->age = 0;
+}
+
 void Key_SetPressed(keyk_t *key, bool pressed)
 {
     key_state_t first_state = key->state;
@@ -41,12 +48,34 @@ void Key_SetPressed(keyk_t *key, bool pressed)
             if (pressed)
             {
                 key->age += 1;
+                if (key->age > HOLD_TIME)
+                {
+                    key->state = KEY_HELD;
+                }
             }
             else
             {
-                key->state = KEY_DEBOUNCE;
-                key->last_press_duration = key->age;
-                key->age = 0;
+                handleReleased(key, key->age);
+            }
+        break;
+
+        case KEY_HELD:
+            if (pressed)
+            {
+                key->age += 1;
+            }
+            else
+            {
+                handleReleased(key, key->age);
+            }
+        break;
+
+        case KEY_ON_INTERRUPTED:
+            if (!pressed)
+            {
+                // Set 0 age, resulting in the release not triggering
+                // at tap event.
+                handleReleased(key, 0);
             }
         break;
 
@@ -62,7 +91,7 @@ key_event_t Key_PeekEvent(const keyk_t *key, const key_config_t *config)
     switch (config->mode)
     {
         case KEY_CONFIG_PRESS:
-            if (key->state == KEY_ON)
+            if (Key_IsPressed(key))
             {
                 event = config->on_press;
             }
@@ -73,7 +102,7 @@ key_event_t Key_PeekEvent(const keyk_t *key, const key_config_t *config)
             {
                 event = config->th.on_tap;
             }
-            else if (config->th.on_hold && key->state == KEY_ON && key->age >= HOLD_TIME)
+            else if (config->th.on_hold && Key_IsHeld(key))
             {
                 event = config->th.on_hold;
             }
@@ -90,4 +119,28 @@ key_event_t Key_GetEvent(keyk_t *key, const key_config_t *config)
     key_event_t event = Key_PeekEvent(key, config);
     key->last_press_duration = 0;
     return event;
+}
+
+void Key_SetInterrupted(keyk_t *key, const key_config_t *config)
+{
+    switch (config->mode)
+    {
+        case KEY_CONFIG_TAP_HOLD:
+            switch (key->state)
+            {
+                case KEY_ON:
+                    key->state = KEY_ON_INTERRUPTED;
+                    /* Setting this causes the key to emit the event immediately */
+                    key->last_press_duration = key->age;
+                break;
+
+                default:
+                break;
+            }
+
+        break;
+
+        default:
+        break;
+    }
 }

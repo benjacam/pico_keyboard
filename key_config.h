@@ -34,3 +34,8 @@ typedef struct key_config
 #define ON_TAP_HOLD(tap, hold) {.mode = KEY_CONFIG_TAP_HOLD, .th = {.on_tap = EVENT_##tap, .on_hold = EVENT_##hold}}
 /* Macro defining a button that doesn't generate events */
 #define ON_NOWT                {.mode = KEY_CONFIG_NONE}
+
+static inline bool KeyConfig_IsTapHold(const key_config_t *c)
+{
+    return c->mode == KEY_CONFIG_TAP_HOLD;
+}

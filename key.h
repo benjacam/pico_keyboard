@@ -4,13 +4,15 @@
 
 #define DEBOUNCE_TIME 10
 
-#define HOLD_TIME 300
+#define HOLD_TIME 200
 
 typedef enum key_state
 {
     KEY_OFF,
     KEY_DEBOUNCE,
     KEY_ON,
+    KEY_ON_INTERRUPTED,
+    KEY_HELD,
 } key_state_t;
 
 typedef struct keyk
@@ -35,8 +37,19 @@ key_event_t Key_PeekEvent(const keyk_t *key, const key_config_t *config);
 */
 key_event_t Key_GetEvent(keyk_t *key, const key_config_t *config);
 
+/*  Interupt the hold counter on a tap hold key. The key
+    will emit its tap event and not emit its hold event, even if
+    it subsequently is held for the full HOLD_TIME */
+void Key_SetInterrupted(keyk_t *key, const key_config_t *config);
+
 /* Basic query if the key is physically pressed */
 static inline bool Key_IsPressed(const keyk_t *key)
 {
-    return key->state == KEY_ON;
+    return key->state == KEY_ON || key->state == KEY_HELD;
+}
+
+/* Query if the key is held */
+static inline bool Key_IsHeld(const keyk_t *key)
+{
+    return key->state == KEY_HELD;
 }
