@@ -100,19 +100,31 @@ static void update_scanned_keys(void)
 
 static layer_t get_layer_from_keys(void)
 {
-    layer_t layer = LAYER_BASE;
-
     FOREACH_ROW(r)
     {
         FOREACH_COL(c)
         {
-            layer = Event_GetLayer(Key_PeekEvent(Keys_GetKey(r, c), Keys_GetKeyConfig(layer, r, c)));
-            if (layer != LAYER_BASE)
-                break;
+            layer_t key_layer = Event_GetLayer(Key_PeekEvent(Keys_GetKey(r, c), Keys_GetKeyConfig(LAYER_BASE, r, c)));
+            if (state.current_layer == LAYER_BASE)
+            {
+                if (key_layer != LAYER_BASE)
+                {
+                    // The first non base layer is selected
+                    return key_layer;
+                }
+            }
+            else
+            {
+                if (key_layer == state.current_layer)
+                {
+                    return key_layer;
+                }
+            }
         }
     }
 
-    return layer;
+    // This avoids non-base layer to non-base layer transitions
+    return LAYER_BASE;
 }
 
 static bool isNonTapHoldKeyPressed(void)
