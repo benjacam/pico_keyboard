@@ -44,8 +44,8 @@ const layer_config_t layer_configs[NLAYERS] =
         .layer_modifier=EVENT_NONE,
         .kcfg = {
             {ON_PRESS(Q),              ON_PRESS(W),              ON_PRESS(E),                  ON_PRESS(R),                   ON_PRESS(T),                      ON_PRESS(Y),                       ON_PRESS(U),                   ON_PRESS(I),                  ON_PRESS(O),               ON_PRESS(P)},
-            {ON_TAP_HOLD(A, GUI_LEFT), ON_TAP_HOLD(S, ALT_LEFT), ON_TAP_HOLD(D, CONTROL_LEFT), ON_TAP_HOLD(F, SHIFT_LEFT),    ON_PRESS(G),                      ON_PRESS(H),                       ON_TAP_HOLD(J, SHIFT_LEFT),    ON_TAP_HOLD(K, CONTROL_LEFT), ON_TAP_HOLD(L, ALT_LEFT),  ON_TAP_HOLD(SEMICOLON, GUI_LEFT)},
-            {ON_PRESS(Z),              ON_PRESS(X),              ON_PRESS(C),                  ON_PRESS(V),                   ON_PRESS(B),                      ON_PRESS(N),                       ON_PRESS(M),                   ON_PRESS(COMMA),              ON_PRESS(PERIOD),          ON_PRESS(SLASH)},
+            {ON_PRESS(A),              ON_TAP_HOLD(S, ALT_LEFT), ON_TAP_HOLD(D, CONTROL_LEFT), ON_TAP_HOLD(F, SHIFT_LEFT),    ON_PRESS(G),                      ON_PRESS(H),                       ON_TAP_HOLD(J, SHIFT_LEFT),    ON_TAP_HOLD(K, CONTROL_LEFT), ON_TAP_HOLD(L, ALT_LEFT),  ON_TAP_HOLD(SEMICOLON, GUI_LEFT)},
+            {ON_TAP_HOLD(Z, GUI_LEFT), ON_PRESS(X),              ON_PRESS(C),                  ON_PRESS(V),                   ON_PRESS(B),                      ON_PRESS(N),                       ON_PRESS(M),                   ON_PRESS(COMMA),              ON_PRESS(PERIOD),          ON_PRESS(SLASH)},
             {ON_NOWT,                  ON_NOWT,                  ON_PRESS(ESCAPE),             ON_TAP_HOLD(ENTER, LAYER_NAV), ON_TAP_HOLD(DELETE, LAYER_MOUSE), ON_TAP_HOLD(BACKSPACE, LAYER_SYM), ON_TAP_HOLD(SPACE, LAYER_NUM), ON_TAP_HOLD(TAB, LAYER_FUN),  ON_NOWT,                   ON_NOWT},
         }
     },
@@ -54,8 +54,8 @@ const layer_config_t layer_configs[NLAYERS] =
         .layer_modifier=EVENT_NONE,
         .kcfg = {
             {ON_NOWT,            ON_NOWT,            ON_NOWT,                ON_NOWT,                       ON_NOWT,          ON_PRESS(AGAIN),     ON_PRESS(PASTE),      ON_PRESS(COPY),       ON_PRESS(CUT),      ON_PRESS(UNDO)}, 
-            {ON_PRESS(GUI_LEFT), ON_PRESS(ALT_LEFT), ON_PRESS(CONTROL_LEFT), ON_PRESS(SHIFT_LEFT),          ON_NOWT,          ON_PRESS(CAPS_LOCK), ON_PRESS(ARROW_LEFT), ON_PRESS(ARROW_DOWN), ON_PRESS(ARROW_UP), ON_PRESS(ARROW_RIGHT)},
-            {ON_NOWT,            ON_NOWT,            ON_NOWT,                ON_NOWT,                       ON_NOWT,          ON_PRESS(INSERT),    ON_PRESS(HOME),       ON_PRESS(PAGE_DOWN),  ON_PRESS(PAGE_UP),  ON_PRESS(END)},
+            {ON_NOWT,            ON_PRESS(ALT_LEFT), ON_PRESS(CONTROL_LEFT), ON_PRESS(SHIFT_LEFT),          ON_NOWT,          ON_PRESS(CAPS_LOCK), ON_PRESS(ARROW_LEFT), ON_PRESS(ARROW_DOWN), ON_PRESS(ARROW_UP), ON_PRESS(ARROW_RIGHT)},
+            {ON_PRESS(GUI_LEFT), ON_NOWT,            ON_NOWT,                ON_NOWT,                       ON_NOWT,          ON_PRESS(INSERT),    ON_PRESS(HOME),       ON_PRESS(PAGE_DOWN),  ON_PRESS(PAGE_UP),  ON_PRESS(END)},
             {ON_NOWT,            ON_NOWT,            ON_PRESS(ESCAPE),       ON_TAP_HOLD(ENTER, LAYER_NAV), ON_PRESS(DELETE), ON_PRESS(BACKSPACE), ON_PRESS(SPACE),      ON_PRESS(TAB),        ON_NOWT,            ON_NOWT},
         },
     },
@@ -64,8 +64,8 @@ const layer_config_t layer_configs[NLAYERS] =
         .layer_modifier=EVENT_NONE,
         .kcfg = {
             {ON_NOWT,            ON_NOWT,            ON_NOWT,                ON_NOWT,              ON_NOWT,                           ON_PRESS(AGAIN),             ON_PRESS(PASTE),               ON_PRESS(COPY),                ON_PRESS(CUT),               ON_PRESS(UNDO)}, 
-            {ON_PRESS(GUI_LEFT), ON_PRESS(ALT_LEFT), ON_PRESS(CONTROL_LEFT), ON_PRESS(SHIFT_LEFT), ON_NOWT,                           ON_NOWT,                     ON_PRESS(MOUSE_MOVEMENT_LEFT), ON_PRESS(MOUSE_MOVEMENT_DOWN), ON_PRESS(MOUSE_MOVEMENT_UP), ON_PRESS(MOUSE_MOVEMENT_RIGHT)},
-            {ON_NOWT,            ON_NOWT,            ON_NOWT,                ON_NOWT,              ON_NOWT,                           ON_NOWT,                     ON_PRESS(MOUSE_WHEEL_LEFT),    ON_PRESS(MOUSE_WHEEL_DOWN),    ON_PRESS(MOUSE_WHEEL_UP),    ON_PRESS(MOUSE_WHEEL_RIGHT)},
+            {ON_NOWT,            ON_PRESS(ALT_LEFT), ON_PRESS(CONTROL_LEFT), ON_PRESS(SHIFT_LEFT), ON_NOWT,                           ON_NOWT,                     ON_PRESS(MOUSE_MOVEMENT_LEFT), ON_PRESS(MOUSE_MOVEMENT_DOWN), ON_PRESS(MOUSE_MOVEMENT_UP), ON_PRESS(MOUSE_MOVEMENT_RIGHT)},
+            {ON_PRESS(GUI_LEFT), ON_NOWT,            ON_NOWT,                ON_NOWT,              ON_NOWT,                           ON_NOWT,                     ON_PRESS(MOUSE_WHEEL_LEFT),    ON_PRESS(MOUSE_WHEEL_DOWN),    ON_PRESS(MOUSE_WHEEL_UP),    ON_PRESS(MOUSE_WHEEL_RIGHT)},
             {ON_NOWT,            ON_NOWT,            ON_PRESS(ESCAPE),       ON_PRESS(ENTER),      ON_TAP_HOLD(DELETE, LAYER_MOUSE),  ON_PRESS(MOUSE_BUTTON_LEFT), ON_PRESS(MOUSE_BUTTON_MIDDLE), ON_PRESS(MOUSE_BUTTON_RIGHT),  ON_NOWT,                     ON_NOWT},
         },
     },
