@@ -1313,6 +1313,8 @@ shift_map = {
     '-' : '_',
     ';' : ':',
     '\'' : '@',
+    '[' : '{',
+    ']' : '}',
 }
 
 event_map = {
@@ -1363,7 +1365,7 @@ event_map = {
     'EVENT_BRACKET_LEFT' : '[',
     'EVENT_BRACKET_RIGHT' : ']',
     'EVENT_BACKSLASH' : '\\',
-    'EVENT_EUROPE_1' : 'undefined',
+    'EVENT_EUROPE_1' : '#',
     'EVENT_SEMICOLON' : ';',
     'EVENT_APOSTROPHE' : '\'',
     'EVENT_GRAVE' : '`',
@@ -1413,7 +1415,7 @@ event_map = {
     'EVENT_KEYPAD_9' : '9',
     'EVENT_KEYPAD_0' : '0',
     'EVENT_KEYPAD_DECIMAL' : 'undefined',
-    'EVENT_EUROPE_2' : 'undefined',
+    'EVENT_EUROPE_2' : '\\',
     'EVENT_APPLICATION' : 'undefined',
     'EVENT_POWER' : 'undefined',
     'EVENT_KEYPAD_EQUAL' : '=',
