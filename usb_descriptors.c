@@ -125,7 +125,7 @@ uint8_t const * tud_descriptor_configuration_cb(uint8_t index)
 // array of pointer to string descriptors
 char const* string_desc_arr [] =
 {
-  (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
+  (const char[]) { 0x09, 0x08 }, // 0: is supported language is UK english (0x0809)
   "BJC",                     // 1: Manufacturer
   "Pico Keyboard",           // 2: Product
   "000001",                  // 3: Serials, should use chip ID
