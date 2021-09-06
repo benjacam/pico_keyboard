@@ -74,8 +74,8 @@ const layer_config_t layer_configs[NLAYERS] =
         .layer_modifier=EVENT_NONE,
         .kcfg = {
             {ON_PRESS(BRACKET_LEFT), ON_PRESS(7), ON_PRESS(8),      ON_PRESS(9), ON_PRESS(BRACKET_RIGHT), ON_NOWT,             ON_NOWT,                       ON_NOWT,                ON_NOWT, ON_NOWT},
-            {ON_PRESS(APOSTROPHE),   ON_PRESS(4), ON_PRESS(5),      ON_PRESS(6), ON_PRESS(EQUAL),         ON_NOWT,             ON_PRESS(SHIFT_LEFT),          ON_PRESS(CONTROL_LEFT), ON_NOWT, ON_NOWT},
-            {ON_PRESS(GRAVE),        ON_PRESS(1), ON_PRESS(2),      ON_PRESS(3), ON_PRESS(BACKSLASH),     ON_NOWT,             ON_NOWT,                       ON_NOWT,                ON_NOWT, ON_NOWT},
+            {ON_PRESS(APOSTROPHE),   ON_PRESS(4), ON_PRESS(5),      ON_PRESS(6), ON_PRESS(EQUAL),         ON_NOWT,             ON_PRESS(SHIFT_LEFT),          ON_PRESS(CONTROL_LEFT), ON_NOWT, ON_PRESS(EUROPE_1)},
+            {ON_PRESS(GRAVE),        ON_PRESS(1), ON_PRESS(2),      ON_PRESS(3), ON_PRESS(EUROPE_2),      ON_NOWT,             ON_NOWT,                       ON_NOWT,                ON_NOWT, ON_NOWT},
             {ON_NOWT,                ON_NOWT,     ON_PRESS(PERIOD), ON_PRESS(0), ON_PRESS(MINUS),         ON_PRESS(BACKSPACE), ON_TAP_HOLD(SPACE, LAYER_NUM), ON_PRESS(TAB),          ON_NOWT, ON_NOWT},
         },
     },
@@ -84,8 +84,8 @@ const layer_config_t layer_configs[NLAYERS] =
         .layer_modifier=EVENT_SHIFT_LEFT,
         .kcfg = {
             {ON_PRESS(BRACKET_LEFT), ON_PRESS(7), ON_PRESS(8),      ON_PRESS(9), ON_PRESS(BRACKET_RIGHT), ON_NOWT,                           ON_NOWT,              ON_NOWT,                ON_NOWT, ON_NOWT},
-            {ON_PRESS(APOSTROPHE),   ON_PRESS(4), ON_PRESS(5),      ON_PRESS(6), ON_PRESS(EQUAL),         ON_NOWT,                           ON_PRESS(SHIFT_LEFT), ON_PRESS(CONTROL_LEFT), ON_NOWT, ON_NOWT},
-            {ON_PRESS(GRAVE),        ON_PRESS(1), ON_PRESS(2),      ON_PRESS(3), ON_PRESS(BACKSLASH),     ON_NOWT,                           ON_NOWT,              ON_NOWT,                ON_NOWT, ON_NOWT},
+            {ON_PRESS(APOSTROPHE),   ON_PRESS(4), ON_PRESS(5),      ON_PRESS(6), ON_PRESS(EQUAL),         ON_NOWT,                           ON_PRESS(SHIFT_LEFT), ON_PRESS(CONTROL_LEFT), ON_NOWT, ON_PRESS(EUROPE_1)},
+            {ON_PRESS(GRAVE),        ON_PRESS(1), ON_PRESS(2),      ON_PRESS(3), ON_PRESS(EUROPE_2),      ON_NOWT,                           ON_NOWT,              ON_NOWT,                ON_NOWT, ON_NOWT},
             {ON_NOWT,                ON_NOWT,     ON_PRESS(PERIOD), ON_PRESS(0), ON_PRESS(MINUS),         ON_TAP_HOLD(BACKSPACE, LAYER_SYM), ON_PRESS(SPACE),      ON_PRESS(TAB),          ON_NOWT, ON_NOWT},
         },
     },
@@ -94,7 +94,7 @@ const layer_config_t layer_configs[NLAYERS] =
         .layer_modifier=EVENT_NONE,
         .kcfg = {
             {ON_PRESS(F12), ON_PRESS(F7), ON_PRESS(F8),          ON_PRESS(F9),    ON_PRESS(PRINT_SCREEN), ON_NOWT,             ON_NOWT,              ON_NOWT,                     ON_NOWT, ON_NOWT},
-            {ON_PRESS(F11), ON_PRESS(F4), ON_PRESS(F5),          ON_PRESS(F6),    ON_PRESS(SCROLL_LOCK),  ON_NOWT,             ON_PRESS(SHIFT_LEFT), ON_PRESS(CONTROL_LEFT),      ON_NOWT, ON_NOWT},
+            {ON_PRESS(F11), ON_PRESS(F4), ON_PRESS(F5),          ON_PRESS(F6),    ON_PRESS(SCROLL_LOCK),  ON_NOWT,             ON_PRESS(SHIFT_LEFT), ON_PRESS(CONTROL_LEFT),      ON_NOWT, ON_PRESS(EUROPE_1)},
             {ON_PRESS(F10), ON_PRESS(F1), ON_PRESS(F2),          ON_PRESS(F3),    ON_PRESS(PAUSE),        ON_NOWT,             ON_NOWT,              ON_NOWT,                     ON_NOWT, ON_NOWT},
             {ON_NOWT,       ON_NOWT,      ON_PRESS(APPLICATION), ON_PRESS(ENTER), ON_PRESS(DELETE),       ON_PRESS(BACKSPACE), ON_PRESS(SPACE),      ON_TAP_HOLD(TAB, LAYER_FUN), ON_NOWT, ON_NOWT},
         },
