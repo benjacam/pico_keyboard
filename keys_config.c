@@ -43,10 +43,10 @@ const layer_config_t layer_configs[NLAYERS] =
     {
         .layer_modifier=EVENT_NONE,
         .kcfg = {
-            {ON_PRESS(Q),              ON_PRESS(W),              ON_PRESS(E),                  ON_PRESS(R),                   ON_PRESS(T),                      ON_PRESS(Y),                       ON_PRESS(U),                   ON_PRESS(I),                  ON_PRESS(O),      ON_PRESS(P)},
-            {ON_PRESS(A),              ON_TAP_HOLD(S, ALT_LEFT), ON_TAP_HOLD(D, CONTROL_LEFT), ON_TAP_HOLD(F, SHIFT_LEFT),    ON_PRESS(G),                      ON_PRESS(H),                       ON_TAP_HOLD(J, SHIFT_LEFT),    ON_TAP_HOLD(K, CONTROL_LEFT), ON_PRESS(L),      ON_PRESS(SEMICOLON)},
-            {ON_TAP_HOLD(Z, GUI_LEFT), ON_PRESS(X),              ON_PRESS(C),                  ON_PRESS(V),                   ON_PRESS(B),                      ON_PRESS(N),                       ON_PRESS(M),                   ON_PRESS(COMMA),              ON_PRESS(PERIOD), ON_PRESS(SLASH)},
-            {ON_NOWT,                  ON_NOWT,                  ON_PRESS(ESCAPE),             ON_TAP_HOLD(ENTER, LAYER_NAV), ON_TAP_HOLD(DELETE, LAYER_MOUSE), ON_TAP_HOLD(BACKSPACE, LAYER_SYM), ON_TAP_HOLD(SPACE, LAYER_NUM), ON_TAP_HOLD(TAB, LAYER_FUN),  ON_NOWT,          ON_NOWT},
+            {ON_PRESS(Q),              ON_PRESS(W),              ON_PRESS(E),                      ON_PRESS(R),                    ON_PRESS(T),                      ON_PRESS(Y),                       ON_PRESS(U),                    ON_PRESS(I),                      ON_PRESS(O),      ON_PRESS(P)},
+            {ON_PRESS(A),              ON_TAP_HOLD(S, ALT_LEFT), ON_TAP_HOLD_STH(D, CONTROL_LEFT), ON_TAP_HOLD_STH(F, SHIFT_LEFT), ON_PRESS(G),                      ON_PRESS(H),                       ON_TAP_HOLD_STH(J, SHIFT_LEFT), ON_TAP_HOLD_STH(K, CONTROL_LEFT), ON_PRESS(L),      ON_PRESS(SEMICOLON)},
+            {ON_TAP_HOLD(Z, GUI_LEFT), ON_PRESS(X),              ON_PRESS(C),                      ON_PRESS(V),                    ON_PRESS(B),                      ON_PRESS(N),                       ON_PRESS(M),                    ON_PRESS(COMMA),                  ON_PRESS(PERIOD), ON_PRESS(SLASH)},
+            {ON_NOWT,                  ON_NOWT,                  ON_PRESS(ESCAPE),                 ON_TAP_HOLD(ENTER, LAYER_NAV),  ON_TAP_HOLD(DELETE, LAYER_MOUSE), ON_TAP_HOLD(BACKSPACE, LAYER_SYM), ON_TAP_HOLD(SPACE, LAYER_NUM),  ON_TAP_HOLD(TAB, LAYER_FUN),      ON_NOWT,          ON_NOWT},
         }
     },
     [LAYER_NAV] =

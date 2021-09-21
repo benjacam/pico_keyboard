@@ -8,16 +8,27 @@
 #include "hardware/dma.h"
 #include "hardware/irq.h"
 
+#include "stdlib.h"
+
+// Linked list node
+typedef struct _keyconfiglist
+{
+    // Store keys by row/col so key instance and config can be retrieved
+    uint8_t row, col;
+    struct _keyconfiglist *next;
+} key_list_t;
+
 static struct key_scan_state
 {
     PIO scan_pio;
     layer_t current_layer;
+    /* List of keys, maintained in the order in which they were pressed */
+    key_list_t *head;
 } state;
 
 static void pio_interrupt_handler(void);
 static void update_set_events(void);
 static void update_scanned_keys(void);
-static void update_interrupted_holds(void);
 static layer_t get_layer_from_keys(void);
 static void scan_init(void);
 static void scan_start(void);
@@ -61,13 +72,81 @@ static void pio_interrupt_handler(void)
 
     update_scanned_keys();
     state.current_layer = get_layer_from_keys();
-    update_interrupted_holds();
     update_set_events();
 
     pio_interrupt_clear(state.scan_pio, KEY_SCAN_IRQ);
     irq_set_enabled(pio_irq, true);
 
     scan_start();
+}
+
+static void key_list_add(uint8_t row, uint8_t col)
+{
+    key_list_t *kl_new = NULL;
+
+    kl_new = malloc(sizeof(*kl_new));
+    assert(kl_new);
+    kl_new->col = col;
+    kl_new->row = row;
+    kl_new->next = NULL;
+
+    if (!state.head)
+    {
+        state.head = kl_new;
+    }
+    else
+    {
+        for (key_list_t *kl = state.head; kl; kl = kl->next)
+        {
+            if (kl->row == row && kl->col == col)
+            {
+                panic("Adding existing key");
+            }
+            if (!kl->next)
+            {
+                kl->next = kl_new;
+                return;
+            }
+        }
+    }
+}
+
+static void key_list_remove(uint8_t row, uint8_t col)
+{
+    key_list_t *kl;
+    key_list_t *kl_prev = NULL;
+    for (kl = state.head; kl; kl = kl->next)
+    {
+        if (kl->col == col && kl->row == row)
+        {
+            if (kl_prev)
+            {
+                kl_prev->next = kl->next;
+            }
+            else
+            {
+                state.head = kl->next;
+            }
+            kl->next = NULL;
+            free(kl);
+            return;
+        }
+        kl_prev = kl;
+    }
+}
+
+static bool key_list_was_press_key_just_released(key_list_t *head)
+{
+    for (key_list_t *kl = head; kl; kl = kl->next)
+    {
+        keyk_t *k = Keys_GetKey(kl->row, kl->col);
+        const key_config_t *c = Keys_GetKeyConfig(state.current_layer, kl->row, kl->col);
+        if (KeyConfig_IsPress(c) && Key_WasJustReleased(k))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 static void update_scanned_keys(void)
@@ -85,15 +164,19 @@ static void update_scanned_keys(void)
 
         assert(input & col_mask);
 
-        FOREACH_ROW(r) // left rows
+        // left rows
+        FOREACH_ROW(r)
         {
             bool value = !!(input & row_gpios_l[r]);
-            Key_SetPressed(Keys_GetKey(r, c), value);
+            keyk_t *key = Keys_GetKey(r, c);
+            Key_SetPressed(key, value);
         }
-        FOREACH_ROW(r) // right nows
+        // right rows
+        FOREACH_ROW(r)
         {
             bool value = !!(input & row_gpios_r[r]);
-            Key_SetPressed(Keys_GetKey(r, (COLS/2) + c), value);
+            keyk_t *key = Keys_GetKey(r, (COLS/2) + c);
+            Key_SetPressed(key, value);
         }
     }
 }
@@ -127,59 +210,12 @@ static layer_t get_layer_from_keys(void)
     return LAYER_BASE;
 }
 
-static bool isNonTapHoldKeyPressed(void)
-{
-    FOREACH_ROW(r)
-    {
-        FOREACH_COL(c)
-        {
-            keyk_t *key = Keys_GetKey(r, c);
-            const key_config_t *config = Keys_GetKeyConfig(state.current_layer, r, c);
-
-            if (!KeyConfig_IsTapHold(config))
-            {
-                if (Key_IsPressed(key))
-                {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-/* If a non-tap-hold key is pressed at the same time as a tap-hold key, the
-   hold timer is interrupted, and no longer behaves as a hold key. Instead
-   the tap-hold key will emit its tap event.
-*/
-static void update_interrupted_holds(void)
-{
-    if (isNonTapHoldKeyPressed())
-    {
-        FOREACH_ROW(r)
-        {
-            FOREACH_COL(c)
-            {
-                keyk_t *key = Keys_GetKey(r, c);
-                const key_config_t *config = Keys_GetKeyConfig(state.current_layer, r, c);
-                
-                if (KeyConfig_IsTapHold(config))
-                {
-                    if (Key_IsPressed(key) && !Key_IsHeld(key))
-                    {
-                        Key_SetInterrupted(key, config);
-                    }
-                }
-            }
-        }
-    }
-}
-
 static void update_set_events(void)
 {
     key_event_t events[8];
     uint event_index = 0;
     key_event_t layer_modifier;
+    bool tap_hold_pressed = false;
 
     layer_modifier = Keys_GetLayerModifier(state.current_layer);
 
@@ -188,23 +224,60 @@ static void update_set_events(void)
         events[event_index++] = layer_modifier;
     }
 
-    // Since tap hold keys can be interrupted, their events need to be captured first
     FOREACH_COL(c)
     {
         FOREACH_ROW(r)
         {
-            const key_config_t *config = Keys_GetKeyConfig(state.current_layer, r, c);
-            if (KeyConfig_IsTapHold(config))
+            keyk_t *k = Keys_GetKey(r, c);
+            if (Key_WasJustPressed(k))
             {
-                key_event_t event;
-                event = Key_GetEvent(Keys_GetKey(r, c), config);
-                if (event)
-                {
-                    if (event_index < count_of(events))
-                    {
-                        events[event_index++] = event;
-                    }
-                }
+                key_list_add(r, c);
+            }
+        }
+    }
+
+    for (key_list_t *kl = state.head; kl; kl = kl->next)
+    {
+        keyk_t *key = Keys_GetKey(kl->row, kl->col);
+        key_config_t config = *Keys_GetKeyConfig(state.current_layer, kl->row, kl->col);
+        key_event_t event;
+
+        if (KeyConfig_IsTapHold(&config) && !Key_IsHeld(key) && Key_IsPressed(key))
+        {
+            tap_hold_pressed = true;
+
+            // If a key is pressed and released after this tap/hold key was pressed, it skips the tap/hold
+            // key into the held state.
+            if (KeyConfig_CanSkipToHold(&config) && key_list_was_press_key_just_released(kl->next))
+            {
+                Key_SetHeld(key, &config);
+                tap_hold_pressed = false;
+            }
+        }
+
+        // If a tap-hold key is pressed, PRESS keys are switched to emit
+        // their event on release instead instead of press. This avoids ordering problems
+        // for rolling between tap-hold and press keys: if the tap-hold
+        // is released first, it will generate its tap event first, the
+        // press key will return to standard press behavior and then it
+        // will emit its event. If the press key is released first, that
+        // will make the tap-hold key skip to its held state (see loop
+        // above) so the held event and the press event are emitted at the
+        // same time.
+        if (tap_hold_pressed)
+        {
+            if (KeyConfig_IsPress(&config) && Key_IsPressed(key))
+            {
+                config.mode = KEY_CONFIG_RELEASE;  
+            }
+        }
+
+        event = Key_GetEvent(key, &config);
+        if (event)
+        {
+            if (event_index < count_of(events))
+            {
+                events[event_index++] = event;
             }
         }
     }
@@ -213,18 +286,10 @@ static void update_set_events(void)
     {
         FOREACH_ROW(r)
         {
-            const key_config_t *config = Keys_GetKeyConfig(state.current_layer, r, c);
-            if (!KeyConfig_IsTapHold(config))
+            keyk_t *k = Keys_GetKey(r, c);
+            if (Key_WasJustReleased(k))
             {
-                key_event_t event;
-                event = Key_GetEvent(Keys_GetKey(r, c), Keys_GetKeyConfig(state.current_layer, r, c));
-                if (event)
-                {
-                    if (event_index < count_of(events))
-                    {
-                        events[event_index++] = event;
-                    }
-                }
+                key_list_remove(r, c);
             }
         }
     }

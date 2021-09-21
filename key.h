@@ -11,13 +11,13 @@ typedef enum key_state
     KEY_OFF,
     KEY_DEBOUNCE,
     KEY_ON,
-    KEY_ON_INTERRUPTED,
     KEY_HELD,
 } key_state_t;
 
 typedef struct keyk
 {
     key_state_t state;
+    key_state_t last_state;
     // +ve for press, -ve for unpressed
     int32_t age;
     // Duration of last press
@@ -37,10 +37,7 @@ key_event_t Key_PeekEvent(const keyk_t *key, const key_config_t *config);
 */
 key_event_t Key_GetEvent(keyk_t *key, const key_config_t *config);
 
-/*  Interupt the hold counter on a tap hold key. The key
-    will emit its tap event and not emit its hold event, even if
-    it subsequently is held for the full HOLD_TIME */
-void Key_SetInterrupted(keyk_t *key, const key_config_t *config);
+void Key_SetHeld(keyk_t *key, const key_config_t *config);
 
 /* Basic query if the key is physically pressed */
 static inline bool Key_IsPressed(const keyk_t *key)
@@ -52,4 +49,14 @@ static inline bool Key_IsPressed(const keyk_t *key)
 static inline bool Key_IsHeld(const keyk_t *key)
 {
     return key->state == KEY_HELD;
+}
+
+static inline bool Key_WasJustPressed(const keyk_t *key)
+{
+    return key->state == KEY_ON && key->last_state == KEY_DEBOUNCE;
+}
+
+static inline bool Key_WasJustReleased(const keyk_t *key)
+{
+    return key->state == KEY_DEBOUNCE && (key->last_state == KEY_ON || key->last_state == KEY_HELD);
 }
