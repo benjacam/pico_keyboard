@@ -92,7 +92,7 @@ static inline void sh1107_pio_init(PIO pio, uint a_pin, uint csb_pin, uint clk_p
     sm_config_set_out_pins(&c, mosi_pin, 1);
     sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
     sm_config_set_out_shift(&c, false, false, 8);
-    sm_config_set_clkdiv(&c, 2.0);
+    sm_config_set_clkdiv(&c, 4.0);
     pio_sm_init(pio, CMD_SM, offset, &c);
     pio_sm_init(pio, DAT_SM, offset, &c);
     pio_sm_set_enabled(pio, CMD_SM, true);

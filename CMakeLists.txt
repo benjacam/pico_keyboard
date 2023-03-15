@@ -2,10 +2,11 @@
 
 cmake_minimum_required(VERSION 3.13)
 
+include(pico_sdk_import.cmake)
+project(pico_keyboard C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
-
-project(pico_keyboard C CXX ASM)
+pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
@@ -13,7 +14,7 @@ add_executable(pico_keyboard pico_keyboard.c usb_descriptors.c key.c keys_config
 
 pico_set_program_name(pico_keyboard "pico_keyboard")
 pico_set_program_version(pico_keyboard "0.1")
-pico_set_binary_type(pico_keyboard copy_to_ram)
+#pico_set_binary_type(pico_keyboard copy_to_ram)
 
 #pico_enable_stdio_uart(pico_keyboard 1)
 

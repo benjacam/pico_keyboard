@@ -2,7 +2,7 @@
 
 #include "key_config.h"
 
-#define DEBOUNCE_TIME 10
+#define DEBOUNCE_TIME 30
 
 #define HOLD_TIME 200
 

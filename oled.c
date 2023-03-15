@@ -30,12 +30,14 @@ typedef struct oled_state
     int data_seq_chan;
     int data_chan;
 
+#ifdef ROTATE_PRESSED
     /* When a key is pressed, the display cycles through 8 byte offsets of
     the character, the rotation per key is stored here.
     The rotation is acheived thanks for the DMA wrap feature when copying
     bytes from the character tiles to the OLED - the character can be copied
     at a byte offset and the DMA wraps round */
     uint8_t rotate_state[ROWS][COLS];
+#endif
 
     bool changed;
 
@@ -279,6 +281,7 @@ static void oled_Redraw(void)
             const key_config_t *kconf = Keys_GetKeyConfig(layer, r, c);
             key_event_t event = kconf->on_press;
             const uint64_t *character = charset + event;
+#ifdef ROTATE_PRESSED
             uint8_t rs = oled_state.rotate_state[r][c];
 
             if (rs || Key_IsPressed(Keys_GetKey(r, c)))
@@ -286,6 +289,7 @@ static void oled_Redraw(void)
                 character = (const uint64_t*)((const uint8_t*)character + rs);
                 oled_state.rotate_state[r][c] = ((rs + 1) % 8);
             }
+#endif
             set_character(row_offset+r, col_offset+c, character);
         }
     }
